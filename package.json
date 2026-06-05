@@ -1,0 +1,103 @@
+{
+  "name": "stackoverflow-ai",
+  "displayName": "Stack Overflow AI",
+  "description": "Ask coding questions inline and get answers in the format of a Stack Overflow thread — condensed, multiple competing answers, one accepted.",
+  "version": "0.0.1",
+  "publisher": "christianalfoni",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other",
+    "Education"
+  ],
+  "keywords": [
+    "ai",
+    "stack overflow",
+    "claude",
+    "agent",
+    "code assistant"
+  ],
+  "galleryBanner": {
+    "color": "#f48024",
+    "theme": "dark"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/christianalfoni/stackoverflow-ai.git"
+  },
+  "bugs": {
+    "url": "https://github.com/christianalfoni/stackoverflow-ai/issues"
+  },
+  "homepage": "https://github.com/christianalfoni/stackoverflow-ai#readme",
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "stackoverflowAI.ask",
+        "title": "Stack Overflow AI: Ask about selection"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "stackoverflowAI.ask",
+        "key": "ctrl+alt+a",
+        "mac": "cmd+alt+a",
+        "when": "editorTextFocus"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "stackoverflowAI.ask",
+          "group": "navigation@99"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Stack Overflow AI",
+      "properties": {
+        "stackoverflowAI.anthropicApiKey": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Anthropic API key. Leave empty to use your existing Claude Code login (`~/.claude` credentials)."
+        },
+        "stackoverflowAI.model": {
+          "type": "string",
+          "default": "claude-sonnet-4-6",
+          "description": "Claude model used to generate answers."
+        },
+        "stackoverflowAI.answerCount": {
+          "type": "number",
+          "default": 3,
+          "description": "How many competing answers to generate per question."
+        },
+        "stackoverflowAI.claudeCodePath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Path to the Claude Code executable. Leave empty to auto-discover (PATH and common install locations)."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "icon": "node tools/gen-icon.mjs",
+    "vscode:prepublish": "npm run compile",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.3.165"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.90.0",
+    "@vscode/vsce": "^3.0.0",
+    "typescript": "^5.6.0"
+  }
+}

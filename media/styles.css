@@ -1,0 +1,129 @@
+:root {
+  --so-orange: #f48024;
+  --so-green: #5eba7d;
+  --border: var(--vscode-panel-border, #3c3c3c);
+  --muted: var(--vscode-descriptionForeground, #999);
+  --code-bg: var(--vscode-textCodeBlock-background, rgba(127, 127, 127, 0.12));
+}
+* { box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: var(--vscode-foreground);
+  background: var(--vscode-editor-background);
+  margin: 0;
+  padding: 0 16px 48px;
+  line-height: 1.5;
+  font-size: 14px;
+}
+header.topbar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; background: var(--vscode-editor-background); z-index: 5;
+}
+.logo { font-weight: 700; }
+.logo .stack { color: var(--vscode-foreground); }
+.logo .overflow { background: var(--so-orange); color: #fff; padding: 1px 6px; border-radius: 4px; }
+.logo .ai { color: var(--so-orange); }
+
+h1.qtitle { font-size: 20px; font-weight: 500; margin: 16px 0 4px; }
+.qmeta { color: var(--muted); font-size: 12px; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+.tags { margin: 8px 0; }
+.tag {
+  display: inline-block; background: color-mix(in srgb, var(--so-orange) 18%, transparent);
+  color: var(--so-orange); border: 1px solid color-mix(in srgb, var(--so-orange) 30%, transparent);
+  padding: 1px 7px; border-radius: 4px; font-size: 12px; margin-right: 6px;
+}
+
+.post { display: grid; grid-template-columns: 44px 1fr; gap: 12px; padding: 16px 0; border-bottom: 1px solid var(--border); }
+.votes { text-align: center; color: var(--muted); }
+.votes .count { font-size: 20px; font-weight: 600; color: var(--vscode-foreground); }
+.votes .arrow { font-size: 18px; opacity: .4; }
+.accepted-check { color: var(--so-green); font-size: 22px; margin-top: 6px; }
+
+.answers-header { display: flex; align-items: baseline; justify-content: space-between; margin: 20px 0 4px; }
+.answers-header h2 { font-size: 17px; font-weight: 500; margin: 0; }
+
+.post.is-accepted { background: color-mix(in srgb, var(--so-green) 7%, transparent); border-radius: 6px; padding: 16px 12px; }
+.accepted-pill { display: inline-block; font-size: 11px; color: var(--so-green); border: 1px solid var(--so-green); border-radius: 10px; padding: 0 8px; margin-bottom: 8px; }
+
+.body p { margin: 0 0 10px; }
+.body h1, .body h2, .body h3 { font-size: 15px; margin: 14px 0 6px; }
+.body ul, .body ol { margin: 0 0 10px; padding-left: 22px; }
+.body code.inline {
+  background: var(--code-bg); padding: 1px 5px; border-radius: 3px;
+  font-family: var(--vscode-editor-font-family, monospace); font-size: 12.5px;
+}
+.body a { color: #4aa3df; }
+
+/* ---- code block: copy lives inside the container, SO-style ---- */
+.codeblock {
+  position: relative;
+  margin: 0 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--code-bg);
+  overflow: hidden;
+}
+.codeblock pre {
+  margin: 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  background: none;          /* avoid VS Code's default <pre>/<code> boxes */
+}
+.codeblock code,
+.codeblock code span {
+  background: none;          /* kill any per-token/per-line background */
+  font-family: var(--vscode-editor-font-family, ui-monospace, monospace);
+  font-size: 12.5px;
+  white-space: pre;
+}
+.copy-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--vscode-editor-background);
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity .12s ease;
+}
+.codeblock:hover .copy-btn,
+.copy-btn:focus-visible { opacity: 1; }
+.copy-btn:hover { color: var(--vscode-foreground); border-color: var(--muted); }
+.copy-btn.copied { color: var(--so-green); border-color: var(--so-green); }
+
+.byline { margin-top: 10px; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.avatar { width: 22px; height: 22px; border-radius: 3px; background: linear-gradient(135deg, var(--so-orange), #b35900); display: inline-flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: 700; }
+.rep { color: var(--vscode-foreground); font-weight: 600; }
+
+/* research log */
+#log { margin: 16px 0; }
+.log-line { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); padding: 3px 0; }
+.log-line .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--so-orange); flex: none; }
+.spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--muted); border-top-color: var(--so-orange); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.placeholder { color: var(--muted); padding: 40px 0; text-align: center; }
+.error { color: #e06c75; white-space: pre-wrap; background: rgba(224,108,117,.1); padding: 12px; border-radius: 6px; }
+
+/* ---- syntax highlighting (theme-aware via vscode-dark / vscode-light) ---- */
+.hl-comment { color: #6a9955; font-style: italic; }
+.hl-string  { color: #ce9178; }
+.hl-number  { color: #b5cea8; }
+.hl-keyword { color: #569cd6; }
+.hl-func    { color: #dcdcaa; }
+.hl-type    { color: #4ec9b0; }
+.hl-ident   { color: var(--vscode-foreground); }
+
+body.vscode-light .hl-comment { color: #008000; }
+body.vscode-light .hl-string  { color: #a31515; }
+body.vscode-light .hl-number  { color: #098658; }
+body.vscode-light .hl-keyword { color: #0000ff; }
+body.vscode-light .hl-func    { color: #795e26; }
+body.vscode-light .hl-type    { color: #267f99; }

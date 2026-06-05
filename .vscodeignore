@@ -1,0 +1,22 @@
+# Source & build config — only the compiled output ships.
+src/**
+tools/**
+smoke.mjs
+**/*.ts
+**/*.map
+tsconfig.json
+
+# Editor / repo files
+.vscode/**
+.gitignore
+.git/**
+.claude/**
+*.vsix
+
+# Dev-only npm metadata (production deps under node_modules are kept by vsce).
+node_modules/.bin/**
+**/.DS_Store
+
+# The SDK's 225 MB per-platform binaries — we use the user's installed Claude
+# Code instead (see findClaudeExecutable). Ship only the SDK's JS.
+node_modules/@anthropic-ai/claude-agent-sdk-*/**

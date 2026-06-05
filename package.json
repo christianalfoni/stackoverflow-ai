@@ -2,7 +2,7 @@
   "name": "stackoverflow-ai",
   "displayName": "Stack Overflow AI",
   "description": "Ask coding questions inline and get answers in the format of a Stack Overflow thread — condensed, multiple competing answers, one accepted.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "christianalfoni",
   "license": "MIT",
   "icon": "media/icon.png",

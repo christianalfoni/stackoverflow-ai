@@ -53,7 +53,7 @@ type Options = NonNullable<Parameters<Awaited<ReturnType<typeof loadQuery>>>[0][
 
 /** One answer in the Stack Overflow-style thread. */
 export interface SOAnswer {
-  /** Invented contributor handle, e.g. "types_wrangler". */
+  /** Humorous spinoff of a real ecosystem figure's name, e.g. "dan_abramnope". */
   author: string;
   /** Flavor reputation number, purely cosmetic. */
   reputation: number;
@@ -100,16 +100,47 @@ answer is short: a direct solution, a minimal code block, and one or two
 sentences of explanation. No preamble, no "Great question!", no restating the
 problem, no closing summary. If you catch yourself writing a wall of text, cut it.
 
+THE GOLDEN RULE — NEVER REFERENCE THE USER'S CODE:
+The code and context you receive exist ONLY to help you work out which general
+technical question to answer. The thread you produce must read like a real Stack
+Overflow page that already existed years before this user opened their editor —
+written by and for strangers who have never seen this codebase. You are NOT doing
+a code review and you are NOT fixing their file.
+
+- BANNED: diagnosing or correcting the user's actual code. Sentences like "You
+  forgot to await your fetchUser call", "Your useEffect is missing a dependency",
+  or "Change your handleSubmit to..." are forbidden — they reference the asker's
+  specific code. If a sentence only makes sense because you saw their file, delete it.
+- BANNED: mentioning their real file names, variable names, function names,
+  component names, types, or project structure — anywhere in the question body,
+  the answers, or the code blocks.
+- INSTEAD: distill the UNDERLYING general problem and answer THAT. Reconstruct it
+  as a minimal, self-contained, generic example using throwaway names (foo,
+  getData, MyComponent) and solve the general case.
+- Second person is fine the way real SO answers use it ("you need to debounce the
+  handler") — as long as it addresses the generic question, never their real code.
+
+Litmus test: if an answer would not help a random person who Googled this exact
+question, it's too specific. Rewrite it.
+
 WORKFLOW:
 1. Research using your tools. Read the user's actual files, grep for types in
    node_modules, check local docs, and search the web when you need authoritative
    API details. Ground every answer in what you actually found — never guess at an
-   API signature you could have verified.
+   API signature you could have verified. Remember the GOLDEN RULE: this research
+   is only to understand the question; none of these specifics may surface in the
+   thread.
 2. Produce MULTIPLE competing answers, like a real thread where different people
    chimed in. Exactly one is marked accepted (the genuinely best approach). The
    others should be real alternatives: a quicker hack, a more robust approach, a
    "you could also..." with a tradeoff. They should not be near-duplicates.
 3. Give the accepted answer the highest vote count.
+4. For each answer's "author" handle, invent a HUMOROUS spinoff of a real, famous
+   name from the relevant tech ecosystem — a recognizable riff, not the actual
+   person. For a TypeScript thread you might use "anders_heilsbork" (Anders
+   Hejlsberg), for React "dan_abramnope" (Dan Abramov), for Linux "linus_torvaldswag",
+   for Node "ryan_dahl997". Pick names that fit the question's technology and make
+   people smile. NEVER use a real person's actual handle or username — always twist it.
 
 OUTPUT:
 Return your answer as structured data matching the provided schema. bodyMarkdown
@@ -145,7 +176,10 @@ const THREAD_SCHEMA = {
 } as const;
 
 function buildPrompt(ctx: AskContext, answerCount: number): string {
-  return `A developer asked this from inside their editor:
+  return `A developer asked this from inside their editor. Everything below is
+REFERENCE ONLY — material to help you understand what they're really asking. Do
+NOT quote it, diagnose it, fix it, or mention any of its names in your output (see
+the GOLDEN RULE).
 
 QUESTION: ${ctx.question || "(no extra words — infer the question from the selected code)"}
 
@@ -161,8 +195,14 @@ SURROUNDING CONTEXT:
 ${ctx.surrounding}
 \`\`\`
 
-Research as needed (their files are under ${ctx.workspaceRoot ?? "the current workspace"}), then
-produce ${answerCount} competing answers in the required JSON format. Be terse.`;
+Your task, in order:
+1. Distill the GENERAL, reusable question behind this (the thing a stranger would
+   have searched for). Research as needed — their files are under ${ctx.workspaceRoot ?? "the current workspace"}.
+2. Author a generic Stack Overflow thread about that general question: a
+   generalized question body (minimal repro with throwaway names, NOT their code)
+   and ${answerCount} competing answers in the required JSON format.
+
+Nothing specific from the reference material above may appear in the thread. Be terse.`;
 }
 
 export interface RunOptions {

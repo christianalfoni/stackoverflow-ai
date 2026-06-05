@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.0.2
+
+- Answers are now strictly generic: the agent uses your code only to understand the question and never reviews, diagnoses, or references your actual files, names, or structure.
+- Answer authors are humorous riffs on well-known names from the relevant tech ecosystem.
+
 ## 0.0.1
 
 Initial release.

@@ -6,8 +6,6 @@ const ctx = {
   question: "How do I debounce a function in TypeScript?",
   languageId: "typescript",
   fileName: "src/util.ts",
-  selection: "",
-  surrounding: "export function handleResize() {\n  // recompute layout\n}",
   workspaceRoot: process.cwd(),
 };
 

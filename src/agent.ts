@@ -63,6 +63,8 @@ export interface SOAnswer {
   accepted: boolean;
   /** The answer body in Markdown (prose + fenced code blocks). Keep it tight. */
   bodyMarkdown: string;
+  /** URLs of web pages actually fetched to back this answer. Optional. */
+  sources?: string[];
 }
 
 /** The full thread rendered into the webview. */
@@ -76,75 +78,65 @@ export interface SOThread {
   answers: SOAnswer[];
 }
 
-/** Code context captured at the cursor when the user asked. */
+/** Lightweight context captured when the user asked. No file contents — the
+ *  agent inspects the project's dependencies/versions itself, on demand. */
 export interface AskContext {
   question: string;
   languageId: string;
   fileName: string;
-  selection: string;
-  surrounding: string;
   workspaceRoot?: string;
 }
 
 /** A progress event surfaced to the webview while the agent researches. */
 export interface ProgressEvent {
-  kind: "tool" | "thinking" | "status";
+  kind: "tool" | "final" | "status";
   label: string;
 }
 
 const SYSTEM_PROMPT = `You are the engine behind "Stack Overflow AI", a tool that answers a developer's
 coding question in the exact format and spirit of a Stack Overflow thread.
 
-Your job is the opposite of a chatbot. You must be TERSE. A good Stack Overflow
-answer is short: a direct solution, a minimal code block, and one or two
-sentences of explanation. No preamble, no "Great question!", no restating the
-problem, no closing summary. If you catch yourself writing a wall of text, cut it.
+You are the opposite of a chatbot: be TERSE. A good answer is a direct solution, a
+minimal code block, and a sentence or two of explanation. No preamble, no
+pleasantries, no restating the problem, no closing summary.
 
 THE GOLDEN RULE — NEVER REFERENCE THE USER'S CODE:
-The code and context you receive exist ONLY to help you work out which general
+The code and context you receive exist only to help you work out the general
 technical question to answer. The thread you produce must read like a real Stack
-Overflow page that already existed years before this user opened their editor —
-written by and for strangers who have never seen this codebase. You are NOT doing
-a code review and you are NOT fixing their file.
+Overflow page written by and for strangers who have never seen this codebase. You
+are not doing a code review and you are not fixing their file.
 
-- BANNED: diagnosing or correcting the user's actual code. Sentences like "You
-  forgot to await your fetchUser call", "Your useEffect is missing a dependency",
-  or "Change your handleSubmit to..." are forbidden — they reference the asker's
-  specific code. If a sentence only makes sense because you saw their file, delete it.
-- BANNED: mentioning their real file names, variable names, function names,
-  component names, types, or project structure — anywhere in the question body,
-  the answers, or the code blocks.
-- INSTEAD: distill the UNDERLYING general problem and answer THAT. Reconstruct it
-  as a minimal, self-contained, generic example using throwaway names (foo,
-  getData, MyComponent) and solve the general case.
-- Second person is fine the way real SO answers use it ("you need to debounce the
-  handler") — as long as it addresses the generic question, never their real code.
+- Never diagnose or correct their actual code, and never mention their file names,
+  variable names, function names, types, or project structure anywhere in the thread.
+- Distill the underlying general problem and answer that, reconstructed as a
+  minimal, self-contained, generic example.
+- You MAY tailor to the dependency versions they actually have installed — that's
+  just being accurate, like any good SO answer ("In React 18…"). Targeting the right
+  version is fine; referencing their code, files, or project layout is not.
+- Second person is fine the way real SO answers use it, as long as it addresses the
+  general question rather than their specific code.
 
-Litmus test: if an answer would not help a random person who Googled this exact
-question, it's too specific. Rewrite it.
+If an answer would not help a stranger who Googled this question, it's too specific.
 
 WORKFLOW:
-1. Research using your tools. Read the user's actual files, grep for types in
-   node_modules, check local docs, and search the web when you need authoritative
-   API details. Ground every answer in what you actually found — never guess at an
-   API signature you could have verified. Remember the GOLDEN RULE: this research
-   is only to understand the question; none of these specifics may surface in the
-   thread.
-2. Produce MULTIPLE competing answers, like a real thread where different people
-   chimed in. Exactly one is marked accepted (the genuinely best approach). The
-   others should be real alternatives: a quicker hack, a more robust approach, a
-   "you could also..." with a tradeoff. They should not be near-duplicates.
-3. Give the accepted answer the highest vote count.
-4. For each answer's "author" handle, invent a HUMOROUS spinoff of a real, famous
-   name from the relevant tech ecosystem — a recognizable riff, not the actual
-   person. For a TypeScript thread you might use "anders_heilsbork" (Anders
-   Hejlsberg), for React "dan_abramnope" (Dan Abramov), for Linux "linus_torvaldswag",
-   for Node "ryan_dahl997". Pick names that fit the question's technology and make
-   people smile. NEVER use a real person's actual handle or username — always twist it.
+1. Give VERSION-ACCURATE help: check which dependencies the project uses and at what
+   versions (read its manifest and lock file, e.g. package.json + the lock file, or
+   the equivalent for the stack), then consult documentation — local or web — for
+   those exact versions. Ground every answer in what you verified; never guess an API
+   signature. You have read-only file tools (Read, Grep, Glob) and web tools
+   (WebSearch, WebFetch) but NO shell — open package.json and the lock file with Read,
+   don't try to cat or run them. Do NOT read or rely on the user's own source files —
+   only their dependency/version/documentation information.
+2. Produce multiple competing answers, like a real thread: exactly one accepted (the
+   genuinely best, with the most votes), the rest real alternatives that are not
+   near-duplicates — a quick hack, a more robust approach, a tradeoff.
+3. For each answer's "author", invent a humorous spinoff of a well-known name from
+   the relevant tech ecosystem — a recognizable riff, never a real handle.
 
 OUTPUT:
-Return your answer as structured data matching the provided schema. bodyMarkdown
-uses normal Markdown with fenced code blocks. Keep each answer short.`;
+Return structured data matching the schema. bodyMarkdown is normal Markdown with
+fenced code blocks. Keep each answer short. If a web page you actually fetched
+backs an answer, put its URL in that answer's "sources" (real pages only).`;
 
 // JSON schema for the structured response — the SDK enforces this, so we never
 // have to parse fenced JSON out of prose (and answers can contain ``` freely).
@@ -169,6 +161,7 @@ const THREAD_SCHEMA = {
           votes: { type: "number" },
           accepted: { type: "boolean" },
           bodyMarkdown: { type: "string" },
+          sources: { type: "array", items: { type: "string" } },
         },
       },
     },
@@ -176,33 +169,23 @@ const THREAD_SCHEMA = {
 } as const;
 
 function buildPrompt(ctx: AskContext, answerCount: number): string {
-  return `A developer asked this from inside their editor. Everything below is
-REFERENCE ONLY — material to help you understand what they're really asking. Do
-NOT quote it, diagnose it, fix it, or mention any of its names in your output (see
-the GOLDEN RULE).
+  return `A developer asked this from their editor (working in ${ctx.languageId}, file ${ctx.fileName}).
 
-QUESTION: ${ctx.question || "(no extra words — infer the question from the selected code)"}
+QUESTION: ${ctx.question || "(no question text given)"}
 
-FILE: ${ctx.fileName} (${ctx.languageId})
+Their project is at ${ctx.workspaceRoot ?? "the current workspace"}. Before answering, find
+out which dependencies they actually use and at what versions: read the nearest manifest
+and lock file (e.g. package.json + the lock file, or the equivalent for this stack) and
+consult documentation for those exact versions, so your help is accurate for the major
+versions they're on. Do NOT read or rely on their own source files — only the
+dependency/version/documentation information.
 
-SELECTED CODE:
-\`\`\`${ctx.languageId}
-${ctx.selection || "(nothing selected)"}
-\`\`\`
+Then, following the GOLDEN RULE, author a generic Stack Overflow thread:
+1. Distill the general, reusable question behind this.
+2. Produce ${answerCount} competing answers — version-accurate but generic (never
+   reference their files, code, or project structure).
 
-SURROUNDING CONTEXT:
-\`\`\`${ctx.languageId}
-${ctx.surrounding}
-\`\`\`
-
-Your task, in order:
-1. Distill the GENERAL, reusable question behind this (the thing a stranger would
-   have searched for). Research as needed — their files are under ${ctx.workspaceRoot ?? "the current workspace"}.
-2. Author a generic Stack Overflow thread about that general question: a
-   generalized question body (minimal repro with throwaway names, NOT their code)
-   and ${answerCount} competing answers in the required JSON format.
-
-Nothing specific from the reference material above may appear in the thread. Be terse.`;
+Be terse.`;
 }
 
 export interface RunOptions {
@@ -242,12 +225,15 @@ export async function askStackOverflow(
     allowedTools: [...READ_ONLY],
     // Gate every tool call: allow the read-only set, deny anything else
     // (e.g. Bash, Write, Edit) so a question can't mutate the project.
-    canUseTool: async (toolName) =>
+    canUseTool: async (toolName, input) =>
       READ_ONLY.has(toolName)
-        ? { behavior: "allow", updatedInput: {} }
+        ? { behavior: "allow", updatedInput: input } // pass the tool's real args through unchanged
         : { behavior: "deny", message: `${toolName} is not allowed in read-only research mode.` },
     // Enforce the response shape natively instead of parsing fenced JSON.
     outputFormat: { type: "json_schema", schema: THREAD_SCHEMA as unknown as Record<string, unknown> },
+    // Stream partial events so we can detect when answer generation *starts*
+    // (the StructuredOutput tool begins), not just when it finishes.
+    includePartialMessages: true,
     // Don't pull in the user's CLAUDE.md / project settings; this is a focused tool.
     settingSources: [],
     cwd: opts.cwd,
@@ -261,15 +247,34 @@ export async function askStackOverflow(
 
   const query = await loadQuery();
   for await (const message of query({ prompt: buildPrompt(ctx, opts.answerCount), options })) {
-    if (message.type === "assistant") {
+    if (message.type === "stream_event") {
+      // Fires the moment the StructuredOutput tool *starts* streaming — i.e. the
+      // agent has begun composing the answers. This is the cue for the fun state.
+      const ev = message.event as { type?: string; content_block?: { type?: string; name?: string } };
+      if (
+        ev?.type === "content_block_start" &&
+        ev.content_block?.type === "tool_use" &&
+        /structured.?output/i.test(ev.content_block.name ?? "")
+      ) {
+        opts.onProgress?.({ kind: "final", label: "" });
+      }
+    } else if (message.type === "assistant") {
+      let captured = false;
       for (const block of message.message.content) {
-        if (block.type === "tool_use") {
+        if (block.type !== "tool_use") continue;
+        if (/structured.?output/i.test(block.name)) {
+          // The tool's input IS the finished thread. Grab it and stop — no need
+          // to wait for the agent's wrap-up turn or the result message.
+          structured = block.input;
+          captured = true;
+          break;
+        } else if (READ_ONLY.has(block.name)) {
           opts.onProgress?.({ kind: "tool", label: describeTool(block.name, block.input) });
-        } else if (block.type === "text" && block.text.trim()) {
-          opts.onProgress?.({ kind: "thinking", label: "Drafting answers…" });
         }
       }
+      if (captured) break;
     } else if (message.type === "result") {
+      // Fallback if we didn't capture the tool input directly above.
       if (message.subtype === "success") {
         structured = message.structured_output ?? message.result;
       } else {

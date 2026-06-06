@@ -55,18 +55,10 @@ async function askCommand(context: vscode.ExtensionContext) {
 }
 
 function captureContext(editor: vscode.TextEditor, question: string): AskContext {
+  // Deliberately lightweight: no file contents or selection (that just adds
+  // latency and pulls answers toward the user's code). The agent inspects the
+  // project's dependencies/versions itself when it needs to.
   const doc = editor.document;
-  const sel = editor.selection;
-  const selection = doc.getText(sel);
-
-  // Grab ~40 lines around the cursor for context without flooding the prompt.
-  const cursorLine = sel.active.line;
-  const start = Math.max(0, cursorLine - 20);
-  const end = Math.min(doc.lineCount - 1, cursorLine + 20);
-  const surrounding = doc.getText(
-    new vscode.Range(start, 0, end, doc.lineAt(end).text.length)
-  );
-
   const workspaceRoot = vscode.workspace.getWorkspaceFolder(doc.uri)?.uri.fsPath
     ?? vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
 
@@ -74,8 +66,6 @@ function captureContext(editor: vscode.TextEditor, question: string): AskContext
     question,
     languageId: doc.languageId,
     fileName: vscode.workspace.asRelativePath(doc.uri),
-    selection,
-    surrounding,
     workspaceRoot,
   };
 }

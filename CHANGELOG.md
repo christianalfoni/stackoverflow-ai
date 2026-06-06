@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.0.4
+
+- Added a screenshot to the README / Marketplace listing.
+
 ## 0.0.3
 
 - Ask a question regardless of what's focused in the editor — an open file is no longer required. The `cmd+alt+a` / `ctrl+alt+a` shortcut now works anywhere (terminal, sidebar, or with no editor open at all).

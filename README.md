@@ -4,6 +4,10 @@ A VS Code extension that answers your coding questions in the **format and spiri
 
 The idea: the SO format is a forcing function for brevity. Make the AI *perform* that format and you get the discipline for free. Multiple answers restore the judgment step you lose with a single confident reply.
 
+<p align="center">
+  <img src="media/screenshot.png" alt="Stack Overflow AI thread in a VS Code side panel" width="600" />
+</p>
+
 ## How it works
 
 1. Put your cursor (or select code) where you're stuck and run **Stack Overflow AI: Ask about selection** (`cmd+alt+a` / `ctrl+alt+a`, or right-click).

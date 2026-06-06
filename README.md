@@ -8,6 +8,14 @@ The idea: the SO format is a forcing function for brevity. Make the AI *perform*
   <img src="media/screenshot.png" alt="Stack Overflow AI thread in a VS Code side panel" width="600" />
 </p>
 
+## A statement
+
+This is not an extension trying to solve anything. It is more of a piece of art — the only way I can express my discomfort with what is happening to our craft.
+
+We are all feeling the pressure of generating code with AI for short-sighted productivity gains. And with that, the increase of cognitive debt, constant context switching, and verbose plans nobody really reads. It creates a world with less human collaboration, less joy of crafting, and fewer supporting communities.
+
+We used to have a rhythm of moving between our crafted code and a community that helped us move forward. Waiting for AI-generated code while doom-scrolling AI-generated TikTok is as dark as it gets — but it has very much become a reality.
+
 ## How it works
 
 1. Put your cursor (or select code) where you're stuck and run **Stack Overflow AI: Ask about selection** (`cmd+alt+a` / `ctrl+alt+a`, or right-click).

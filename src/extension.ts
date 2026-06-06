@@ -13,11 +13,9 @@ export function deactivate() {}
 let currentPanel: vscode.WebviewPanel | undefined;
 
 async function askCommand(context: vscode.ExtensionContext) {
+  // An open editor is optional — you can ask a question regardless of what
+  // (if anything) is focused in the editor.
   const editor = vscode.window.activeTextEditor;
-  if (!editor) {
-    vscode.window.showInformationMessage("Open a file and place your cursor where you have a question.");
-    return;
-  }
 
   const question = await vscode.window.showInputBox({
     prompt: "What are you trying to figure out?",
@@ -54,18 +52,19 @@ async function askCommand(context: vscode.ExtensionContext) {
   }
 }
 
-function captureContext(editor: vscode.TextEditor, question: string): AskContext {
+function captureContext(editor: vscode.TextEditor | undefined, question: string): AskContext {
   // Deliberately lightweight: no file contents or selection (that just adds
   // latency and pulls answers toward the user's code). The agent inspects the
-  // project's dependencies/versions itself when it needs to.
-  const doc = editor.document;
-  const workspaceRoot = vscode.workspace.getWorkspaceFolder(doc.uri)?.uri.fsPath
+  // project's dependencies/versions itself when it needs to. The editor is
+  // optional — when nothing is open we just fall back to the workspace folder.
+  const doc = editor?.document;
+  const workspaceRoot = (doc && vscode.workspace.getWorkspaceFolder(doc.uri)?.uri.fsPath)
     ?? vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
 
   return {
     question,
-    languageId: doc.languageId,
-    fileName: vscode.workspace.asRelativePath(doc.uri),
+    languageId: doc?.languageId,
+    fileName: doc ? vscode.workspace.asRelativePath(doc.uri) : undefined,
     workspaceRoot,
   };
 }

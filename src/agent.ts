@@ -82,8 +82,8 @@ export interface SOThread {
  *  agent inspects the project's dependencies/versions itself, on demand. */
 export interface AskContext {
   question: string;
-  languageId: string;
-  fileName: string;
+  languageId?: string;
+  fileName?: string;
   workspaceRoot?: string;
 }
 
@@ -169,7 +169,10 @@ const THREAD_SCHEMA = {
 } as const;
 
 function buildPrompt(ctx: AskContext, answerCount: number): string {
-  return `A developer asked this from their editor (working in ${ctx.languageId}, file ${ctx.fileName}).
+  const where = ctx.languageId
+    ? `A developer asked this from their editor (working in ${ctx.languageId}${ctx.fileName ? `, file ${ctx.fileName}` : ""}).`
+    : `A developer asked this from their editor.`;
+  return `${where}
 
 QUESTION: ${ctx.question || "(no question text given)"}
 

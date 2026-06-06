@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.0.3
+
+- Ask a question regardless of what's focused in the editor — an open file is no longer required. The `cmd+alt+a` / `ctrl+alt+a` shortcut now works anywhere (terminal, sidebar, or with no editor open at all).
+
 ## 0.0.2
 
 - Answers are strictly generic — they never review, diagnose, or reference your code, files, or project structure; you get a real Stack Overflow-style thread, not a code review.
